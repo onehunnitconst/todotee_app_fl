@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:todotee_app/api/memo_provider.dart';
 
-import '../../../api/memo_api.dart';
 import '../../../dto/memo_response_dto.dart';
 import 'memo_event.dart';
 import 'memo_state.dart';
 
 class MemoBloc extends Bloc<MemoEvent, MemoState> {
-  final MemoApi memoApi;
+  final MemoProvider memoProvider;
 
-  MemoBloc({required this.memoApi}) : super(MemoStateInit()) {
+  MemoBloc({required this.memoProvider}) : super(MemoStateInit()) {
     on<MemoEventInitialize>((event, emit) {
       emit(MemoStateInit());
     });
@@ -17,9 +17,7 @@ class MemoBloc extends Bloc<MemoEvent, MemoState> {
     on<GetMemosEvent>((event, emit) async {
       emit(MemoStateLoading(memoList: state.memoList));
       try {
-        final res = await memoApi.getMemos();
-        List<MemoResponseDto> memoList =
-            res.map((e) => MemoResponseDto.fromJson(e)).toList();
+        final List<MemoResponseDto> memoList = await memoProvider.getMemos();
         emit(MemoStateSuccess(memoList: memoList));
       } catch (error) {
         _processError(error, emit);
@@ -29,9 +27,9 @@ class MemoBloc extends Bloc<MemoEvent, MemoState> {
     on<CreateMemoEvent>((event, emit) async {
       emit(MemoStateLoading(memoList: state.memoList));
       try {
-        final res = await memoApi.create(event.body);
-        final memo = MemoResponseDto.fromJson(res);
-        state.memoList.add(memo);
+        final MemoResponseDto createdMemo =
+            await memoProvider.create(event.body);
+        state.memoList.add(createdMemo);
         emit(MemoStateSuccess(memoList: state.memoList));
       } catch (error) {
         _processError(error, emit);
@@ -41,12 +39,14 @@ class MemoBloc extends Bloc<MemoEvent, MemoState> {
     on<ModifyMemoEvent>((event, emit) async {
       emit(MemoStateLoading(memoList: state.memoList));
       try {
-        await memoApi.modifyMemo(event.id, event.body);
+        await memoProvider.modifyMemo(event.id, event.body);
+
         final int index =
             state.memoList.indexWhere((element) => element.id == event.id);
-        final res = await memoApi.getMemoById(event.id);
-        final memo = MemoResponseDto.fromJson(res);
-        state.memoList[index] = memo;
+        final MemoResponseDto modifiedMemo =
+            await memoProvider.getMemoById(event.id);
+        state.memoList[index] = modifiedMemo;
+
         emit(MemoStateSuccess(memoList: state.memoList));
       } catch (error) {
         _processError(error, emit);
@@ -56,7 +56,7 @@ class MemoBloc extends Bloc<MemoEvent, MemoState> {
     on<DeleteMemoEvent>((event, emit) async {
       emit(MemoStateLoading(memoList: state.memoList));
       try {
-        await memoApi.deleteMemoById(event.id);
+        await memoProvider.deleteMemoById(event.id);
         final int index =
             state.memoList.indexWhere((element) => element.id == event.id);
         state.memoList.removeAt(index);

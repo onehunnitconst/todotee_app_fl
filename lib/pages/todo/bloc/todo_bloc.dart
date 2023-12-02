@@ -1,20 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:todotee_app/api/todo_api.dart';
-import 'package:todotee_app/dto/todo_response_dto.dart';
+import 'package:todotee_app/api/todo_provider.dart';
 import 'package:todotee_app/pages/todo/bloc/todo_event.dart';
 import 'package:todotee_app/pages/todo/bloc/todo_state.dart';
 
 class TodoBloc extends Bloc<TodoEvent, TodoState> {
-  final TodoApi todoApi;
+  final TodoProvider todoProvider;
 
-  TodoBloc({required this.todoApi}) : super(TodoStateInit()) {
+  TodoBloc({required this.todoProvider}) : super(TodoStateInit()) {
     on<GetTodosEvent>((event, emit) async {
       emit(TodoStateLoading(todoList: state.todoList));
       try {
-        final res = await todoApi.getTodos();
-        List<TodoResponseDto> todoList =
-            res.map((e) => TodoResponseDto.fromJson(e)).toList();
+        final todoList = await todoProvider.getTodos();
         emit(TodoStateSuccess(todoList: todoList));
       } catch (error) {
         _processError(error, emit);
@@ -24,9 +21,8 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<CreateTodoEvent>((event, emit) async {
       emit(TodoStateLoading(todoList: state.todoList));
       try {
-        final res = await todoApi.create(event.body);
-        final todo = TodoResponseDto.fromJson(res);
-        state.todoList.add(todo);
+        final newTodo = await todoProvider.create(event.body);
+        state.todoList.add(newTodo);
         emit(TodoStateSuccess(todoList: state.todoList));
       } catch (error) {
         _processError(error, emit);
@@ -36,12 +32,11 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<ModifyTodoEvent>((event, emit) async {
       emit(TodoStateLoading(todoList: state.todoList));
       try {
-        await todoApi.modifyTodo(event.id, event.body);
+        await todoProvider.modifyTodo(event.id, event.body);
         final int index =
             state.todoList.indexWhere((element) => element.id == event.id);
-        final res = await todoApi.getTodoById(event.id);
-        final todo = TodoResponseDto.fromJson(res);
-        state.todoList[index] = todo;
+        final modifiedTodo = await todoProvider.getTodoById(event.id);
+        state.todoList[index] = modifiedTodo;
         emit(TodoStateSuccess(todoList: state.todoList));
       } catch (error) {
         _processError(error, emit);
@@ -51,7 +46,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<DeleteTodoEvent>((event, emit) async {
       emit(TodoStateLoading(todoList: state.todoList));
       try {
-        await todoApi.deleteTodoById(event.id);
+        await todoProvider.deleteTodoById(event.id);
         final int index =
             state.todoList.indexWhere((element) => element.id == event.id);
         state.todoList.removeAt(index);

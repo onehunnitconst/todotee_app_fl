@@ -1,16 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:todotee_app/api/todo_provider.dart';
 import 'package:todotee_app/constants.dart';
 import 'package:todotee_app/dto/todo_request_dto.dart';
+import 'package:todotee_app/dto/todo_response_dto.dart';
 
-class TodoApi {
+class TodoIoProvider implements TodoProvider {
+  static const String _path = 'todos';
+
   final HttpClient client;
 
-  TodoApi({required this.client});
+  TodoIoProvider({required this.client});
 
-  Future<Map<String, dynamic>> create(TodoRequestDto body) async {
-    Uri uri = Uri.parse("${Constants.apiRoute}/todos");
+  @override
+  Future<TodoResponseDto> create(TodoRequestDto body) async {
+    Uri uri = Uri.parse("${Constants.apiRoute}/$_path");
     HttpClientRequest request = await client.postUrl(uri);
 
     request.headers.contentType = ContentType.json;
@@ -19,34 +24,40 @@ class TodoApi {
     HttpClientResponse response = await request.close();
 
     final String jsonString = await response.transform(utf8.decoder).join();
-    final Map<String, dynamic> data = jsonDecode(jsonString);
+    final Map<String, dynamic> responseBody = jsonDecode(jsonString);
 
-    return data;
+    return TodoResponseDto.fromJson(responseBody);
   }
 
-  Future<List<dynamic>> getTodos() async {
-    Uri uri = Uri.parse("${Constants.apiRoute}/todos");
+  @override
+  Future<List<TodoResponseDto>> getTodos() async {
+    Uri uri = Uri.parse("${Constants.apiRoute}/$_path");
     HttpClientRequest request = await client.getUrl(uri);
+
     HttpClientResponse response = await request.close();
 
     final String jsonString = await response.transform(utf8.decoder).join();
-    final List<dynamic> data = jsonDecode(jsonString);
+    final List<Map<String, dynamic>> responseBody = jsonDecode(jsonString);
 
-    return data;
+    return responseBody.map(TodoResponseDto.fromJson).toList();
   }
 
-  Future<Map<String, dynamic>> getTodoById(int id) async {
-    Uri uri = Uri.parse('${Constants.apiRoute}/todos/$id');
+  @override
+  Future<TodoResponseDto> getTodoById(int id) async {
+    Uri uri = Uri.parse('${Constants.apiRoute}/$_path/$id');
     HttpClientRequest request = await client.getUrl(uri);
+
     HttpClientResponse response = await request.close();
 
     final String jsonString = await response.transform(utf8.decoder).join();
-    final Map<String, dynamic> data = jsonDecode(jsonString);
-    return data;
+    final Map<String, dynamic> responseBody = jsonDecode(jsonString);
+
+    return TodoResponseDto.fromJson(responseBody);
   }
 
+  @override
   Future modifyTodo(int id, TodoRequestDto body) async {
-    Uri uri = Uri.parse('${Constants.apiRoute}/todos/$id');
+    Uri uri = Uri.parse('${Constants.apiRoute}/$_path/$id');
     HttpClientRequest request = await client.patchUrl(uri);
 
     request.headers.contentType = ContentType.json;
@@ -55,8 +66,9 @@ class TodoApi {
     await request.close();
   }
 
+  @override
   Future deleteTodoById(int id) async {
-    Uri uri = Uri.parse('${Constants.apiRoute}/todos/$id');
+    Uri uri = Uri.parse('${Constants.apiRoute}/$_path/$id');
     HttpClientRequest request = await client.deleteUrl(uri);
 
     await request.close();

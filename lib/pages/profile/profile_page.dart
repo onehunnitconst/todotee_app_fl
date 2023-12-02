@@ -30,6 +30,10 @@ class ProfilePage extends StatelessWidget {
               "상수",
               style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w700),
             ),
+            Text(
+              "onehunnitconst",
+              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ),

@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todotee_app/api/memo_api.dart';
-import 'package:todotee_app/api/todo_api.dart';
-import 'package:todotee_app/pages/login/cubit/login_button_cubit.dart';
+import 'package:todotee_app/api/memo_io_provider.dart';
+import 'package:todotee_app/api/memo_dio_provider.dart';
+import 'package:todotee_app/api/todo_io_provider.dart';
+import 'package:todotee_app/api/todo_dio_provider.dart';
+import 'package:todotee_app/constants.dart';
 import 'package:todotee_app/pages/login/login_page.dart';
 import 'package:todotee_app/pages/login/login_page_input_controllers.dart';
 import 'package:todotee_app/pages/memo_detail/bloc/memo_detail_bloc.dart';
@@ -27,35 +30,50 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<MainPageNavCubit>(
-          create: (context) => MainPageNavCubit(),
+        Provider<Dio>(
+          create: (context) => Dio(
+            BaseOptions(baseUrl: Constants.apiRoute),
+          ),
+        ),
+        Provider<MemoDioProvider>(
+          create: (context) => MemoDioProvider(
+            client: context.read<Dio>(),
+          ),
+        ),
+        Provider<TodoDioProvider>(
+          create: (context) => TodoDioProvider(
+            client: context.read<Dio>(),
+          ),
         ),
         Provider<HttpClient>(
           create: (context) => HttpClient(),
         ),
-        Provider<TodoApi>(
-          create: (context) => TodoApi(
+        Provider<TodoIoProvider>(
+          create: (context) => TodoIoProvider(
             client: context.read<HttpClient>(),
           ),
         ),
-        Provider<MemoApi>(
-          create: (context) => MemoApi(
+        Provider<MemoIoProvider>(
+          create: (context) => MemoIoProvider(
             client: context.read<HttpClient>(),
           ),
+        ),
+        Provider<MainPageNavCubit>(
+          create: (context) => MainPageNavCubit(),
         ),
         Provider<TodoBloc>(
           create: (context) => TodoBloc(
-            todoApi: context.read<TodoApi>(),
+            todoProvider: context.read<TodoDioProvider>(),
           ),
         ),
         Provider<MemoBloc>(
           create: (context) => MemoBloc(
-            memoApi: context.read<MemoApi>(),
+            memoProvider: context.read<MemoDioProvider>(),
           ),
         ),
         Provider<MemoDetailBloc>(
           create: (context) => MemoDetailBloc(
-            memoApi: context.read<MemoApi>(),
+            memoApi: context.read<MemoIoProvider>(),
           ),
         ),
         Provider<MemoEditPageInputControllers>(

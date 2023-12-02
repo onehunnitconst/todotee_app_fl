@@ -5,8 +5,8 @@ class LoginPageInputControllers {
   late TextEditingController _idController;
   TextEditingController get idController => _idController;
 
-  late TextEditingController _memoController;
-  TextEditingController get memoController => _memoController;
+  late TextEditingController _passwordController;
+  TextEditingController get passwordController => _passwordController;
 
   late LoginButtonCubit _loginButtonCubit;
   LoginButtonCubit get loginButtonCubit => _loginButtonCubit;
@@ -15,13 +15,13 @@ class LoginPageInputControllers {
 
   void initializeControllers() {
     _idController = TextEditingController();
-    _memoController = TextEditingController();
+    _passwordController = TextEditingController();
     _loginButtonCubit = LoginButtonCubit();
   }
 
   void switchLoginButtonState() {
     final bool isButtonValid =
-        _idController.text.isNotEmpty && _memoController.text.isNotEmpty;
+        _idController.text.isNotEmpty && _passwordController.text.isNotEmpty;
     _loginButtonCubit.changeState(isButtonValid);
   }
 }
